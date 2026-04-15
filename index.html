@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/night.min.css">
+  <!-- Highlight.js for code syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/monokai.min.css">
+  
   <style>
     .highlight-blue { color: #4db8ff; }
     .highlight-red { color: #ff4d4d; }
@@ -67,7 +70,7 @@
   <div class="reveal">
     <div class="slides">
       
-      <!-- Page 1: What is an LLM -->
+      <!-- Page 1 -->
       <section>
         <section data-transition="zoom">
           <h2>What is an <span class="highlight-blue">LLM</span>?</h2>
@@ -93,13 +96,10 @@
               </ul>
             </div>
           </div>
-          <p class="fragment fade-up" style="margin-top: 30px; font-style: italic; color: #888; font-size: 0.7em;">
-            (This is exactly why we need an Agent... Press ↓ or → to continue)
-          </p>
         </section>
       </section>
 
-      <!-- Page 2: What is an Agent -->
+      <!-- Page 2 -->
       <section>
         <section data-transition="slide">
           <h2>What is an <span class="highlight-yellow">Agent</span>?</h2>
@@ -116,7 +116,7 @@
               <h3 style="color: #4db8ff; margin-bottom: 10px;">⚙️ Format, Control & Execute</h3>
               <ul style="text-align: left; display: inline-block; margin: 0;">
                 <li><strong>Understands</strong> the LLM's intent and output</li>
-                <li><strong>Standardizes & Controls</strong> the LLM's response (e.g., enforcing JSON formatting)</li>
+                <li><strong>Standardizes & Controls</strong> the LLM's response</li>
                 <li><strong>Executes actions</strong> using external tools on behalf of the brain</li>
               </ul>
             </div>
@@ -124,7 +124,7 @@
         </section>
       </section>
 
-      <!-- Page 3: What are Tools -->
+      <!-- Page 3 -->
       <section>
         <section data-transition="slide">
           <h2>What are <span class="highlight-green">Tools</span>?</h2>
@@ -151,39 +151,33 @@
         </section>
       </section>
 
-      <!-- Page 4: Logic Flow (Dynamic Chart) -->
+      <!-- Page 4 -->
       <section>
         <section data-transition="slide">
           <h2 style="font-size: 1.4em;">Agent Internal <span class="highlight-blue">Logic Flow</span> 🔄</h2>
           <div class="flowchart">
             <div class="fc-node fc-blue fragment fade-down" style="grid-column: 1;">
               <strong>1. System Prompt 📝</strong>
-              <span style="color:#ddd">Define Skills & Tools list</span>
             </div>
             <div class="fc-edge fragment fade-down" style="grid-column: 2;">➕</div>
             <div class="fc-node fc-white fragment fade-down" style="grid-column: 3;">
               <strong>User Query 🗣️</strong>
-              <span style="color:#ddd">Task or Question</span>
             </div>
             <div class="fc-edge fragment fade-down" style="grid-column: 1 / span 3; text-align: center;">
-              ⬇️ <br><span style="font-size: 0.3em; vertical-align: top; color: #ccc;">2. Combine & Send</span>
+              ⬇️ <br><span style="font-size: 0.3em; color: #ccc;">2. Combine & Send</span>
             </div>
             <div class="fc-node fc-yellow fragment zoom-in" style="grid-column: 1 / span 3; width: 60%; padding: 25px;">
               <strong style="font-size: 1.4em;">3. 🧠 LLM Decision</strong>
-              <span style="color:#ddd;">Analyzes query & tools to make a choice</span>
             </div>
             <div class="fragment fade-right" style="grid-column: 1; text-align: center;">
-              <div class="fc-edge">↙️</div>
-              <div style="color: #ffcc00;">Needs Tool (Name + Args)</div>
+              <div class="fc-edge">↙️</div><div style="color: #ffcc00;">Needs Tool</div>
             </div>
             <div style="grid-column: 2;"></div>
             <div class="fragment fade-left" style="grid-column: 3; text-align: center;">
-              <div class="fc-edge">↘️</div>
-              <div style="color: #4cd137;">Sufficient Info</div>
+              <div class="fc-edge">↘️</div><div style="color: #4cd137;">Sufficient Info</div>
             </div>
             <div class="fc-node fc-green fragment fade-up" style="grid-column: 1; position: relative;">
               <strong>4. 🦾 Agent Exec Tool</strong>
-              <span style="color:#ddd">Run tool & get Response</span>
               <div class="fragment fade-in" style="position: absolute; right: -120px; top: -60px; width: 100px; height: 100px; border-left: 2px dashed #ff4d4d; border-top: 2px dashed #ff4d4d; border-radius: 15px 0 0 0;">
                  <div style="position: absolute; top: -15px; right: -10px; font-size: 1.5em;">▶️</div>
                  <div style="position: absolute; left: 10px; top: 30px; color: #ff4d4d; font-weight: bold; line-height: 1.2;">5. Tool Resp<br>🔄 6. Loop</div>
@@ -192,68 +186,108 @@
             <div style="grid-column: 2;"></div>
             <div class="fc-node fc-white fragment zoom-in" style="grid-column: 3; box-shadow: 0 0 25px rgba(255,255,255,0.4);">
               <strong style="font-size: 1.2em; color: #fff;">7. ✅ Final Answer</strong>
-              <span style="color:#ddd">Respond back to User</span>
             </div>
           </div>
         </section>
       </section>
 
-      <!-- Page 5: What is ReAct -->
+      <!-- Page 5 -->
       <section>
         <section data-transition="slide">
           <h2 style="font-size: 1.5em;">What is a <span class="highlight-pink">ReAct</span> Agent?</h2>
-          
           <div class="fragment fade-up">
             <p style="font-size: 1.1em; letter-spacing: 2px;">
               <strong>ReAct</strong> = <strong class="highlight-yellow">Re</strong>asoning + <strong class="highlight-green">Act</strong>ing
             </p>
-            <p style="font-size: 0.6em; color: #aaa;">Mapping the concept to our Logic Flow from the previous slide:</p>
           </div>
-
-          <!-- The ReAct Triangle Loop -->
           <div style="position: relative; height: 380px; width: 100%; margin-top: 40px; font-size: 0.6em;">
-            
-            <!-- 1. Thought (Reasoning) -->
             <div class="fc-node fc-yellow fragment fade-down" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 300px; z-index: 2; padding: 15px;">
               <strong style="font-size: 1.3em;">1. Thought 🧠 (Reasoning)</strong>
               <span style="color: #ddd">LLM thinks: <em>"I need to find X. I should use Tool Y."</em></span>
-              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85em; color: #ffcc00;">
-                (Prev Slide Step 3: LLM Decision)
-              </div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85em; color: #ffcc00;">(Prev Slide Step 3)</div>
             </div>
-
-            <!-- Arrow Thought -> Action -->
             <div class="fragment fade-in" style="position: absolute; top: 120px; left: 30%; font-size: 3em; transform: rotate(-30deg); color: #ffcc00;">↙️</div>
-
-            <!-- 2. Action -->
             <div class="fc-node fc-green fragment fade-right" style="position: absolute; bottom: 10px; left: 5%; width: 280px; z-index: 2; padding: 15px;">
               <strong style="font-size: 1.3em;">2. Action 🦾 (Acting)</strong>
               <span style="color: #ddd">Agent executes Tool Y with parameters.</span>
-              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85em; color: #4cd137;">
-                (Prev Slide Step 4: Agent Exec Tool)
-              </div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85em; color: #4cd137;">(Prev Slide Step 4)</div>
             </div>
-
-            <!-- Arrow Action -> Observation -->
             <div class="fragment fade-in" style="position: absolute; bottom: 40px; left: 45%; font-size: 3em; color: #4cd137;">➡️</div>
-
-            <!-- 3. Observation -->
             <div class="fc-node fc-blue fragment fade-left" style="position: absolute; bottom: 10px; right: 5%; width: 280px; z-index: 2; padding: 15px;">
               <strong style="font-size: 1.3em;">3. Observation 👁️</strong>
               <span style="color: #ddd">Agent feeds Tool Y's result back to LLM.</span>
-              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85em; color: #4db8ff;">
-                (Prev Slide Step 5: Feedback Loop)
-              </div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85em; color: #4db8ff;">(Prev Slide Step 5)</div>
             </div>
-
-            <!-- Arrow Observation -> Thought -->
             <div class="fragment fade-in" style="position: absolute; top: 120px; right: 30%; font-size: 3em; transform: rotate(30deg); color: #4db8ff;">↖️</div>
+            <div class="fragment zoom-in" style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); font-size: 5em; color: rgba(255,255,255,0.15);">🔄</div>
+          </div>
+        </section>
+      </section>
 
-            <!-- Loop Center Icon -->
-            <div class="fragment zoom-in" style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); font-size: 5em; color: rgba(255,255,255,0.15);">
-              🔄
-            </div>
+      <!-- Page 6: Code Walkthrough -->
+      <section>
+        <section data-transition="convex">
+          <h2 style="font-size: 1.4em;">Building a <span class="highlight-blue">SqlAgent</span> 💻</h2>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px;">
             
+            <!-- Left: Legend / Steps -->
+            <div style="width: 38%; font-size: 0.55em; text-align: left;">
+              <ul style="list-style-type: none; padding: 0; margin: 0;">
+                <li style="margin-bottom: 12px; padding: 10px; background: rgba(77, 184, 255, 0.1); border-left: 4px solid #4db8ff; border-radius: 4px;">
+                  <strong style="color:#4db8ff; font-size:1.1em;">1. Build Tool</strong><br>Python func <code>execute_sql(sql)</code> returns DB data.
+                </li>
+                <li style="margin-bottom: 12px; padding: 10px; background: rgba(255, 204, 0, 0.1); border-left: 4px solid #ffcc00; border-radius: 4px;">
+                  <strong style="color:#ffcc00; font-size:1.1em;">2. System Prompt</strong><br>Instruct LLM about the tool and output format.
+                </li>
+                <li style="margin-bottom: 12px; padding: 10px; background: rgba(255, 255, 255, 0.1); border-left: 4px solid #fff; border-radius: 4px;">
+                  <strong style="color:#fff; font-size:1.1em;">3. Call LLM</strong><br>Send prompt + user query in a loop.
+                </li>
+                <li style="margin-bottom: 12px; padding: 10px; background: rgba(255, 77, 77, 0.1); border-left: 4px solid #ff4d4d; border-radius: 4px;">
+                  <strong style="color:#ff4d4d; font-size:1.1em;">4 & 6. Check Intent</strong><br>If NO tool needed, break loop and return answer.
+                </li>
+                <li style="margin-bottom: 12px; padding: 10px; background: rgba(76, 209, 55, 0.1); border-left: 4px solid #4cd137; border-radius: 4px;">
+                  <strong style="color:#4cd137; font-size:1.1em;">4. Execute Tool</strong><br>If YES, parse arguments and run Step 1 function.
+                </li>
+                <li style="margin-bottom: 12px; padding: 10px; background: rgba(232, 67, 147, 0.1); border-left: 4px solid #e84393; border-radius: 4px;">
+                  <strong style="color:#e84393; font-size:1.1em;">5. Append & Loop</strong><br>Add tool response to history, LLM thinks again.
+                </li>
+              </ul>
+            </div>
+
+            <!-- Right: Code with Line Highlights -->
+            <div style="width: 60%;">
+              <pre style="margin: 0; box-shadow: 0 0 20px rgba(0,0,0,0.5); border-radius: 8px;"><code class="language-python" data-line-numbers="3-5|7-11|13-16|18-20|22-24|26-28" style="max-height: 550px; font-size: 0.85em; line-height: 1.35; border-radius: 8px;">class SqlAgent:
+
+    # 1. Build a Tool
+    def execute_sql(self, sql_string: str):
+        return db.query(sql_string)
+
+    # 2. System Prompt
+    sys_prompt = """You are a SQL Agent. 
+    Tool available: execute_sql(sql_string).
+    Output tool_call if DB data is needed."""
+
+    def run(self, user_query: str):
+        messages = [self.sys_prompt, user_query]
+        
+        while True:
+            # 3. Call LLM
+            llm_res = llm.chat(messages)
+
+            # 4 & 6. Check Intent (If No -> Exit)
+            if not llm_res.has_tool_call:
+                return llm_res.final_text
+
+            # 4. Intent Yes -> Execute Tool
+            sql = llm_res.tool_args['sql_string']
+            tool_data = self.execute_sql(sql)
+
+            # 5. Append Response & Loop
+            messages.append(llm_res.raw)
+            messages.append(f"Result: {tool_data}")
+</code></pre>
+            </div>
+
           </div>
         </section>
       </section>
@@ -262,13 +296,16 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+  <!-- Highlight.js plugin script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
   <script>
     Reveal.initialize({
       controls: true,
       progress: true,
       center: true,
       hash: true,
-      transition: 'slide'
+      transition: 'slide',
+      plugins: [ RevealHighlight ] // Activate syntax highlighting & line animations
     });
   </script>
 </body>
