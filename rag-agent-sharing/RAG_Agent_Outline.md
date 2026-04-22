@@ -195,7 +195,41 @@
   LIMIT 3;
   ```
 
-## 幻灯片 8: RAG Agent 典型架构与工作流
+## 幻灯片 8: 最后一块拼图 —— Generator (生成器) 与 Top-K 调优
+- **什么是 Generator？**: *[动画步进 1: 概念引入]*
+  - Retriever 已经通过 SQL + 向量计算把最相关的“知识碎片”找出来了。Generator 的任务就是把 **用户问题** 和 **检索出的上下文碎片** 拼装成提示词 (Prompt)，交给大模型 (LLM) 进行“开卷考试”。
+- **代码与 Prompt 实战演示**: *[动画步进 2: 渐显组装逻辑]*
+  ```python
+  def generate_answer(user_query, retrieved_chunks):
+      # 1. 组装 System Prompt (赋予大模型背景知识)
+      prompt = "你是一个智能助手。请严格基于以下【参考资料】回答用户问题。严禁胡编乱造。\n\n"
+      for i, chunk in enumerate(retrieved_chunks):
+          prompt += f"[参考资料 {i+1}] (相关度: {chunk.score}): {chunk.content}\n"
+      
+      prompt += f"\n用户问题: {user_query}"
+      
+      # 2. 调用大模型 (LLM 参与)
+      response = llm_client.chat(prompt)
+      return response
+  ```
+- **带溯源的完美 Output 示例**: *[动画步进 3: 展示 LLM 的最终回答]*
+  - **最终呈现给用户的效果**:
+    > **🤖 回答:** 炖排骨汤的最佳时间是 1.5 到 2 小时，建议在最后 20 分钟加盐，这样肉质更鲜嫩。
+    > 
+    > **【参考来源】:**
+    > - `[资料 1]` (相关度: 0.92): 《中餐食谱-汤类》第12页 - 炖排骨汤时长建议...
+    > - `[资料 2]` (相关度: 0.88): 《中餐食谱-调味技巧》第5页 - 盐的添加时机...
+    > - `[资料 3]` (相关度: 0.75): 《厨房常见问题》 - 肉类炖煮常识...
+- **关键参数调优 —— Top-K (查几条？)**: *[动画步进 4: Top-K 权衡探讨]*
+  - Retriever 到底该返回几个 Chunk (Top-K) 给 Generator 呢？这是 RAG 调优的重中之重！
+  - **K 太小 (例如 K=1)**: 容易漏掉关键信息，导致 LLM 回答不完整 (Recall 低)。
+  - **K 太大 (例如 K=20)**:
+    1. 💸 **贵且慢**: 极大地增加 Token 消耗和推理延迟。
+    2. 🚫 **超限**: 可能直接撑爆大模型的 Context Window (上下文窗口限制)。
+    3. 😵 **Lost in the Middle (中间迷失效应)**: 塞给大模型的噪音太多，它反而抓不住重点，甚至忘了原本的问题。
+  - **实战经验**: 企业级应用通常将 Top-K 设定在 **3 到 5** 之间，配合优质的 Chunking 策略达到最佳平衡。
+
+## 幻灯片 9: RAG Agent 典型架构与工作流
 - **ReAct 框架 (Reason + Act)**:
   - `Thought`: 我需要查找 XXX 资料。
   - `Action`: 调用 Knowledge Base 检索工具。
@@ -203,7 +237,7 @@
   - `Thought`: 结合检索结果，我还需要 XXX。
 - **Multi-Agent 协作**: Retriever Agent 负责找资料，Summarizer Agent 负责总结，Reviewer Agent 负责防幻觉。
 
-## 幻灯片 9: 评估与挑战 (Evaluation)
+## 幻灯片 10: 评估与挑战 (Evaluation)
 - **如何评估 RAG 的好坏**:
   - 检索指标 (Context Relevance): 查得准不准？
   - 生成指标 (Faithfulness / Answer Relevance): 答得对不对？有没有幻觉？
@@ -212,7 +246,7 @@
   - 数据隐私与权限控制。
   - 多轮对话中的 Context 长度灾难与遗忘。
 
-## 幻灯片 10: 总结与展望
+## 幻灯片 11: 总结与展望
 - RAG 是企业级 LLM 落地不可或缺的基石。
 - Agent 化是 RAG 的演进方向，从被动回答变为主动解决问题。
 - Q&A 互动环节。
