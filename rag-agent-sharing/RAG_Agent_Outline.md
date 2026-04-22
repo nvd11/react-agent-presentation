@@ -93,12 +93,41 @@
     ```
 - **引出后续**: 基于多态，我们的 Generator 完全不需要关心底层是查文件还是查 DB。但如果面对海量的非结构化文档（PDF、Word），磁盘扫文件太慢，SQL 匹配又不准，我们该怎么存？这就需要引入全新的检索形态——**向量数据库 (VectorDatabaseRetriever)**。
 
-## 幻灯片 5: 从 RAG 到 Agent (引入 Tool Calling)
+## 幻灯片 5: 语义的降维打击 —— 向量化 (Vectorization) 与 Embedding
+- **文本查询的局限性**: *[动画步进 1: 举例说明痛点]*
+  - 传统的关键字匹配（如 SQL 的 `LIKE` 或 Elasticsearch 的 TF-IDF）很难理解**语义相近**的词。
+  - **例子**: 假设问题是 `“查询苹果的营养价值”`，而知识库里只有 `“雪梨”` 和 `“米饭”` 的数据。
+  - **痛点**: 在字面上，“苹果”与“雪梨”、“米饭”完全不包含相同的字。传统的文本比较无法判断“苹果”和“雪梨”在语义上属于同类（水果），从而导致检索失败。
+- **引入向量化 (Vectorization)**: *[动画步进 2: 概念与图例]*
+  - **什么是向量化？**: 将人类理解的自然语言（词语、句子、段落）转换为计算机能理解的**高维浮点数数组**（如 768 维、1536 维的向量）。
+  - **高维空间的距离**: 在这个高维空间中，语义相近的词（苹果、雪梨）距离会非常近，而语义无关的词（苹果、米饭）距离会很远。
+  - **[预留图例占位符]**: *（插入一张 3D 坐标系图，展示 Apple 和 Pear 聚集在一起，而 Rice 离得较远的散点图）*
+- **什么是 Embedding 模型？**: *[动画步进 3: Embedding 介绍与常见模型]*
+  - **概念**: 专门用来执行“向量化”动作的 AI 模型就叫 Embedding Model。它负责把文本编码成带有语义坐标的向量。
+  - **常见模型**: OpenAI `text-embedding-3-small/large`，开源的 `BGE-M3` (智源)，`Nomic-embed-text` 等。
+- **抽象化代码示例 (OOP 延续)**: *[动画步进 4: 代码展示]*
+  ```python
+  from abc import ABC, abstractmethod
+
+  # 定义 Embedding 的抽象基类
+  class BaseEmbedder(ABC):
+      @abstractmethod
+      def embed_text(self, text: str) -> list[float]:
+          pass
+
+  # 具体实现子类：调用 OpenAI 的 Embedding 服务
+  class OpenAIEmbedder(BaseEmbedder):
+      def embed_text(self, text: str) -> list[float]:
+          # 返回类似 [-0.012, 0.045, 0.111, ...] 的高维数组
+          return openai_client.embeddings.create(input=text, model="text-embedding-3-small").data[0].embedding
+  ```
+
+## 幻灯片 6: 从 RAG 到 Agent (引入 Tool Calling)
 - **Agent 的定义**: 感知 (Perception) -> 大脑 (Brain/LLM) -> 记忆 (Memory) -> 行动 (Action/Tools)。
 - **Tool Calling (函数调用)**: LLM 根据 RAG 检索到的缺失信息，决定是否需要调用外部工具（例如：API 查询、数据库查询、Web 搜索）。
 - **Router 机制**: 动态判断当前 Query 是直接回答，还是要走 RAG，还是需要调用外部工具链。
 
-## 幻灯片 6: RAG Agent 典型架构与工作流
+## 幻灯片 7: RAG Agent 典型架构与工作流
 - **ReAct 框架 (Reason + Act)**:
   - `Thought`: 我需要查找 XXX 资料。
   - `Action`: 调用 Knowledge Base 检索工具。
@@ -106,7 +135,7 @@
   - `Thought`: 结合检索结果，我还需要 XXX。
 - **Multi-Agent 协作**: Retriever Agent 负责找资料，Summarizer Agent 负责总结，Reviewer Agent 负责防幻觉。
 
-## 幻灯片 7: 评估与挑战 (Evaluation)
+## 幻灯片 8: 评估与挑战 (Evaluation)
 - **如何评估 RAG 的好坏**:
   - 检索指标 (Context Relevance): 查得准不准？
   - 生成指标 (Faithfulness / Answer Relevance): 答得对不对？有没有幻觉？
@@ -115,7 +144,7 @@
   - 数据隐私与权限控制。
   - 多轮对话中的 Context 长度灾难与遗忘。
 
-## 幻灯片 8: 总结与展望
+## 幻灯片 9: 总结与展望
 - RAG 是企业级 LLM 落地不可或缺的基石。
 - Agent 化是 RAG 的演进方向，从被动回答变为主动解决问题。
 - Q&A 互动环节。
