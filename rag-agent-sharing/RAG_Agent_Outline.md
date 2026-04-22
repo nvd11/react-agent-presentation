@@ -49,12 +49,31 @@
   answer = generator.generate(query, context) # 生成阶段
   ```
 
-## 幻灯片 4: 进阶检索技巧 (Advanced RAG)
-- **痛点**: 简单 Top-K 检索往往匹配不到核心意图。
-- **解决方案**:
-  - **Query 重写 (Query Rewriting / HyDE)**: 扩展用户原始提问。
-  - **混合检索 (Hybrid Search)**: 向量检索 (Semantic) + 关键词检索 (BM25)。
-  - **重排序 (Reranking)**: 引入专门的 Reranker 模型二次打分，提高 Top-K 的相关性。
+## 幻灯片 4: 知识库构建与 Retriever 的“羁绊”
+- **核心观点**: *[动画步进 1: 抛出核心结论]*
+  - **知识库的形态，决定了 Retriever 的实现方式**。它们是一体两面的关系，怎么存数据，就得怎么写代码去取数据。
+- **形态 1: 文本文件 (Text File)** *[动画步进 2: 出现形态1及代码]*
+  - 如果我们最简单粗暴地将私有知识存为一个 `.txt` 文件，那么 Retriever 必须具备**读取本地/网络磁盘**的能力。
+  - **代码示例**:
+    ```python
+    def file_retriever(query, file_path="knowledge.txt"):
+        # 读取本地磁盘文件内容作为上下文
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return extract_relevant_info(query, content)
+    ```
+- **形态 2: 关系型数据库 (RDBMS)** *[动画步进 3: 出现形态2及代码]*
+  - 如果企业将规则、用户信息作为文本存在 MySQL 里，那么 Retriever 就必须具备**执行 SQL 查询**的能力。
+  - **代码示例**:
+    ```python
+    def db_retriever(query, user_id):
+        # 连接数据库并执行 SQL 查询获取上下文
+        cursor = db_connection.cursor()
+        sql = "SELECT user_profile FROM users WHERE id = %s"
+        cursor.execute(sql, (user_id,))
+        return cursor.fetchone()[0]
+    ```
+- **引出后续**: 刚才讲的是最基础的形态，但面对海量的非结构化文档（PDF、Word），我们该怎么存？怎么搜最快？这就需要引入更强大的形态——**向量数据库**。
 
 ## 幻灯片 5: 从 RAG 到 Agent (引入 Tool Calling)
 - **Agent 的定义**: 感知 (Perception) -> 大脑 (Brain/LLM) -> 记忆 (Memory) -> 行动 (Action/Tools)。
