@@ -122,12 +122,55 @@
           return openai_client.embeddings.create(input=text, model="text-embedding-3-small").data[0].embedding
   ```
 
-## 幻灯片 6: 从 RAG 到 Agent (引入 Tool Calling)
+## 幻灯片 6: 知识库的碎片化加工 —— Chunking (分块) 的艺术
+- **为何需要 Chunking？**: *[动画步进 1: 逐条展示痛点与案例]*
+  - **痛点 1: 文档粒度过大**。知识库导入通常以“整篇文档”（如 100 页的《员工手册》PDF）为单位。
+  - **痛点 2: 上下文噪音与 Token 限制**。
+    - *例子*: 假设用户提问 `“带薪年假有几天？”`。如果我们把整本 100 页的员工手册塞给大模型，由于里面还包含了“病假、产假、报销、考勤”等大量无关内容，不仅可能直接撑爆大模型的 Token 上限，还会产生严重的上下文噪音，导致 LLM 混淆各类假期的规定（幻觉）。
+  - **痛点 3: 溯源与相关度 (Top-K) 的要求**。企业级 RAG 的输出不能只有光秃秃的答案，必须带有参考出处。
+    - *输出示例*: `回答：您的带薪年假有 5 天。 [参考来源: 《员工手册》第12页第3段] (相关度: 0.95)`。
+    - *结论*: 只有将文档切分成细粒度的段落 (Chunk)，我们才能在海量内容中只把最相关的几个小片段 (Top-K) 召回给 LLM。
+- **如何 Chunking？及 Overlap 的重要性**: *[动画步进 2: 常见策略]*
+  - **常见方法**: 按固定字符长度 (Character)、按 Token 数量、按文档语义结构 (如 Markdown 标题/段落)。
+  - **重叠度 (Overlap)**: 为了防止一个完整的长句被无情地一刀劈成两半（导致语义断层），相邻的 Chunk 之间会保留一定比例的重叠量（例如 `Chunk Size=500, Overlap=50`），保证上下文连贯。
+- **处理流程与 OOP 代码演示**: *[动画步进 3: 先切分，后 Embedding 的流水线]*
+  - **核心流程**: 整篇 Document -> 切分为 N 个 Chunk -> 对每一个 Chunk 单独进行 Embedding 向量化。
+  - **代码示例 (抽象化)**:
+    ```python
+    from abc import ABC, abstractmethod
+
+    # 1. 定义抽象切分器
+    class BaseSplitter(ABC):
+        @abstractmethod
+        def split_document(self, document_text: str) -> list[str]:
+            pass
+
+    # 2. 具体子类：带 Overlap 的递归文本切分器
+    class RecursiveTextSplitter(BaseSplitter):
+        def __init__(self, chunk_size=500, overlap=50):
+            self.chunk_size = chunk_size
+            self.overlap = overlap
+            
+        def split_document(self, document_text: str) -> list[str]:
+            # 执行带重叠的分块逻辑...
+            return ["chunk_1", "chunk_2", "chunk_3"] # 返回切分后的文本片段
+
+    # 3. 知识入库预处理 Pipeline (结合前一页的 Embedder)
+    splitter = RecursiveTextSplitter()
+    embedder = OpenAIEmbedder() # 复用上一页讲解的 Embedder
+
+    chunks = splitter.split_document(full_pdf_text)
+    # 对每一个 Chunk 单独做向量化
+    chunk_embeddings = [embedder.embed_text(chunk) for chunk in chunks] 
+    ```
+- **引出下文**: *[动画步进 4: 过渡]* 切好的成千上万个 Chunk 和它们对应的长长的高维向量（Embedding），该存在哪里？下一页，我们将揭开 **VectorDB（向量数据库）** 的神秘面纱，并剖析常见的知识库表结构。
+
+## 幻灯片 7: 从 RAG 到 Agent (引入 Tool Calling)
 - **Agent 的定义**: 感知 (Perception) -> 大脑 (Brain/LLM) -> 记忆 (Memory) -> 行动 (Action/Tools)。
 - **Tool Calling (函数调用)**: LLM 根据 RAG 检索到的缺失信息，决定是否需要调用外部工具（例如：API 查询、数据库查询、Web 搜索）。
 - **Router 机制**: 动态判断当前 Query 是直接回答，还是要走 RAG，还是需要调用外部工具链。
 
-## 幻灯片 7: RAG Agent 典型架构与工作流
+## 幻灯片 8: RAG Agent 典型架构与工作流
 - **ReAct 框架 (Reason + Act)**:
   - `Thought`: 我需要查找 XXX 资料。
   - `Action`: 调用 Knowledge Base 检索工具。
@@ -135,7 +178,7 @@
   - `Thought`: 结合检索结果，我还需要 XXX。
 - **Multi-Agent 协作**: Retriever Agent 负责找资料，Summarizer Agent 负责总结，Reviewer Agent 负责防幻觉。
 
-## 幻灯片 8: 评估与挑战 (Evaluation)
+## 幻灯片 9: 评估与挑战 (Evaluation)
 - **如何评估 RAG 的好坏**:
   - 检索指标 (Context Relevance): 查得准不准？
   - 生成指标 (Faithfulness / Answer Relevance): 答得对不对？有没有幻觉？
@@ -144,7 +187,7 @@
   - 数据隐私与权限控制。
   - 多轮对话中的 Context 长度灾难与遗忘。
 
-## 幻灯片 9: 总结与展望
+## 幻灯片 10: 总结与展望
 - RAG 是企业级 LLM 落地不可或缺的基石。
 - Agent 化是 RAG 的演进方向，从被动回答变为主动解决问题。
 - Q&A 互动环节。
