@@ -350,6 +350,10 @@ chunk_embeddings = [embedder.embed_text(chunk) for chunk in chunks]
                         <strong>The "Recipe vs. Washing Machine" dilemma:</strong> When asking <em>"How to cook ribs?"</em>, querying the entire DB might accidentally surface washing machine manuals. By applying a SQL <code>WHERE topic = 'recipe'</code> filter BEFORE the vector search, we drastically improve speed and eliminate cross-domain hallucinations.
                     </p>
                     <pre style="margin-top: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"><code data-trim class="language-sql" style="padding: 10px; font-size: 0.6em; line-height: 1.2;">
+-- ⚠️ Crucial Step 0: The user's query must FIRST be embedded into a vector 
+-- using the EXACT SAME Embedding Model as the knowledge base.
+-- e.g., query_vector = embedder.embed("How to cook ribs?") -> '[0.11, 0.04, ...]'
+
 -- Hybrid Search: Metadata Pre-filtering + Vector Similarity
 SELECT dc.content, 1 - (dc.embedding <=> '[0.11, 0.04, ...]') AS similarity_score
 FROM document_chunks dc
