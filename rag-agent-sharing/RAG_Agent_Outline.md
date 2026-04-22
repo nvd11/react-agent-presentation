@@ -229,13 +229,41 @@
     3. 😵 **Lost in the Middle (中间迷失效应)**: 塞给大模型的噪音太多，它反而抓不住重点，甚至忘了原本的问题。
   - **实战经验**: 企业级应用通常将 Top-K 设定在 **3 到 5** 之间，配合优质的 Chunking 策略达到最佳平衡。
 
-## 幻灯片 9: RAG Agent 典型架构与工作流
-- **ReAct 框架 (Reason + Act)**:
-  - `Thought`: 我需要查找 XXX 资料。
-  - `Action`: 调用 Knowledge Base 检索工具。
-  - `Observation`: 拿到检索结果。
-  - `Thought`: 结合检索结果，我还需要 XXX。
-- **Multi-Agent 协作**: Retriever Agent 负责找资料，Summarizer Agent 负责总结，Reviewer Agent 负责防幻觉。
+## 幻灯片 9: RAG Agent 的核心调度与架构决策
+- **Agent 的核心职责 (Orchestrator)**: *[动画步进 1: 概念引入]*
+  - 前面我们把 Retriever 和 Generator 都造好了，现在需要一个大管家把它们串起来，这就是 RAG Agent。
+  - 它负责暴露出对外的 `ask()` 接口，接收用户问题，调度底层组件，并打包最终的结构化响应。
+- **架构决策: LCEL 链式 vs 命令式 (Imperative)**: *[动画步进 2: 架构对比与探讨]*
+  - **业界流行 (纯 LCEL)**: 很多教程喜欢用一行代码串联全流程，例如 `chain = retriever | prompt | llm`。虽然代码短，但调试如同黑盒。
+  - **企业级推荐 (命令式编排)**: 在真实项目中，我们强烈建议用**显式的 Python 代码进行调度**。
+    - *优势*: 易于打断点调试、状态透明，最重要的是——**可以非常轻松地实现业务分支阻断 (Early Exit)**。
+- **核心代码拆解 (动态讲解 `rag_agent.py`)**: *[动画步进 3: 展示代码与高光逻辑]*
+  - *(配合 GitHub 源码讲解: src/agents/rag_agent.py)*
+  ```python
+  class RAGAgent:
+      def __init__(self, retriever: BaseRetriever, generator: ILLMGenerator):
+          self.retriever = retriever
+          self.generator = generator
+
+      async def ask(self, question: str, top_k=3, topic_filters=None) -> RAGResponse:
+          # 1. 动态传参: 允许每次查询覆盖 top_k 和主题过滤
+          config = {"top_k": top_k, "topic_filters": topic_filters}
+          
+          # 2. Retriever 阶段
+          retrieved_contexts = await self.retriever.ainvoke(input=question, config=config)
+          
+          # 💡 高光时刻: 提前阻断 (Early Exit)
+          # 如果知识库里啥也没查到，直接返回！
+          # 避免调用 LLM，不仅防止大模型强行“胡编乱造”，还能省下高昂的大模型 API 费用。
+          if not retrieved_contexts:
+              return RAGResponse(query=question, generated_answer="抱歉，知识库未找到相关内容。", retrieved_contexts=[])
+
+          # 3. Generator 阶段 (只有在找到上下文时才调用)
+          answer = await self.generator.ainvoke({"context": retrieved_contexts, "question": question})
+          
+          # 4. 打包返回带溯源的结构
+          return RAGResponse(query=question, generated_answer=answer, retrieved_contexts=retrieved_contexts)
+  ```
 
 ## 幻灯片 10: 评估与挑战 (Evaluation)
 - **如何评估 RAG 的好坏**:
