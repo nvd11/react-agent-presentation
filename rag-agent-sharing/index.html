@@ -178,6 +178,58 @@ answer = generator.generate(query, context)  # [Generation Phase]
                 </div>
             </section>
 
+            <!-- ==============================
+                 Slide 5: KB & Retriever (OOP)
+                 ============================== -->
+            <section>
+                <h3 style="font-size: 1.1em;">Knowledge Base & Retriever: The OOP Bond</h3>
+                <hr style="border-color: #6272a4;">
+                
+                <!-- Base Class -->
+                <div class="fragment fade-up">
+                    <p style="font-size: 0.7em; margin-bottom: 5px;"><strong>The Principle:</strong> Storage format dictates retrieval logic. We start with a contract:</p>
+                    <pre style="margin-top: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"><code data-trim class="language-python" style="padding: 10px; font-size: 0.7em; line-height: 1.2;">
+from abc import ABC, abstractmethod
+
+class BaseRetriever(ABC):
+    @abstractmethod
+    def retrieve(self, query: str) -> str: 
+        pass # All subclasses must implement this
+                    </code></pre>
+                </div>
+
+                <!-- File Retriever -->
+                <div class="fragment fade-up" style="margin-top: 10px;">
+                    <p style="font-size: 0.7em; margin-bottom: 5px; color: #8be9fd;">Form 1: Text Files ➡️ Requires Disk I/O</p>
+                    <pre style="margin-top: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"><code data-trim class="language-python" style="padding: 10px; font-size: 0.7em; line-height: 1.2;">
+class FileRetriever(BaseRetriever):
+    def retrieve(self, query: str) -> str:
+        with open("knowledge.txt", "r", encoding="utf-8") as f:
+            return extract_info(query, f.read())
+                    </code></pre>
+                </div>
+
+                <!-- DB Retriever -->
+                <div class="fragment fade-up" style="margin-top: 10px;">
+                    <p style="font-size: 0.7em; margin-bottom: 5px; color: #50fa7b;">Form 2: Relational DB (MySQL) ➡️ Requires SQL Execution</p>
+                    <pre style="margin-top: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"><code data-trim class="language-python" style="padding: 10px; font-size: 0.7em; line-height: 1.2;">
+class DatabaseRetriever(BaseRetriever):
+    def retrieve(self, query: str) -> str:
+        cursor = self.db.cursor()
+        cursor.execute("SELECT text FROM docs WHERE topic = %s", (query,))
+        return cursor.fetchone()[0]
+                    </code></pre>
+                </div>
+
+                <!-- Transition -->
+                <div class="fragment fade-up highlight-block" style="margin-top: 10px; padding: 10px;">
+                    <p style="font-size: 0.65em; margin: 0; color: #f8f8f2;">
+                        🤔 <strong>The Dilemma:</strong> Thanks to Polymorphism, our Generator doesn't care where the data comes from. BUT, for millions of unstructured PDFs, disk scanning is too slow, and SQL <code>LIKE</code> is semantically blind. <br>
+                        <span style="color: #ff79c6; font-weight: bold;">➡️ We need a revolutionary subclass: VectorDatabaseRetriever.</span>
+                    </p>
+                </div>
+            </section>
+
         </div>
     </div>
 
