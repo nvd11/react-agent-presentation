@@ -165,10 +165,33 @@
     ```
 - **引出下文**: *[动画步进 4: 过渡]* 切好的成千上万个 Chunk 和它们对应的长长的高维向量（Embedding），该存在哪里？下一页，我们将揭开 **VectorDB（向量数据库）** 的神秘面纱，并剖析常见的知识库表结构。
 
-## 幻灯片 7: 从 RAG 到 Agent (引入 Tool Calling)
-- **Agent 的定义**: 感知 (Perception) -> 大脑 (Brain/LLM) -> 记忆 (Memory) -> 行动 (Action/Tools)。
-- **Tool Calling (函数调用)**: LLM 根据 RAG 检索到的缺失信息，决定是否需要调用外部工具（例如：API 查询、数据库查询、Web 搜索）。
-- **Router 机制**: 动态判断当前 Query 是直接回答，还是要走 RAG，还是需要调用外部工具链。
+## 幻灯片 7: 向量数据库 (Vector DB) 与知识库表结构设计
+- **什么是 Vector DB？及其常见选型**: *[动画步进 1: 概念与产品]*
+  - **概念**: 专门为存储、管理和快速检索（相似度计算，如余弦相似度）高维向量数据而优化的数据库。
+  - **常见选型**: `PostgreSQL` (配合 `pgvector` 扩展，最推荐的企业级方案)、Google `AlloyDB`、`BigQuery` 向量检索，以及专用的 Milvus / Pinecone 等。
+- **核心表结构 1: `document_chunks` (存放知识碎片的仓库)**: *[动画步进 2: 重点字段解析]*
+  - 这张表用来存放我们上一页切分好的数据。核心字段包含：`id`, `doc_id`, `content` (TEXT), `embedding` (VECTOR)。
+  - **核心问题探讨: 为什么存了 Vector 还要存 `content` 原文本？**
+    - *解释*: 向量 (`embedding`) 只在 **Retriever (检索)** 阶段发挥作用，用于通过空间距离计算出 Top-K。但 LLM (大模型) 读不懂向量数组！所以在 **Generator (生成)** 阶段，我们必须把查出来的对应的原文本 (`content`) 喂给 LLM，让它做“开卷考试”式的阅读理解。
+- **核心表结构 2: `document_topics` (元数据与主题分类)**: *[动画步进 3: 引入 Topic 与混合检索]*
+  - **表作用**: 记录文档属于哪个 Topic (例如：'credit_risk' 信用风险, 'retail_banking' 零售业务)。
+  - **为何要用 Topic 分类？(Metadata Pre-filtering 混合检索)**:
+    - *解释*: 如果企业有 1000 万个 Chunk，每次都做全局向量比对，不仅慢，还容易导致“跨界幻觉”（比如问零售贷款，却搜出了投行的规则）。通过 Topic，我们可以在向量搜索**前**，先用 SQL 做一次精准过滤，极大缩小检索范围，提升速度和准确度。
+- **SQL 实战演示 (Topic 过滤 + 向量检索)**: *[动画步进 4: 展现混合检索代码]*
+  ```sql
+  -- 这是一个典型的 Metadata Pre-filtering (混合检索) 语句
+  SELECT 
+      dc.content, 
+      1 - (dc.embedding <=> '[0.11, 0.04, ...]') AS similarity_score
+  FROM document_chunks dc
+  -- 1. 先通过关联表精确过滤 Topic，大幅缩小扫描范围
+  JOIN document_topics dt ON dc.doc_id = dt.doc_id
+  JOIN topics t ON dt.topic_id = t.topic_id
+  WHERE t.topic_name = 'credit_risk' 
+  -- 2. 然后在缩小的范围内，计算向量余弦相似度并取 Top 3
+  ORDER BY dc.embedding <=> '[0.11, 0.04, ...]' 
+  LIMIT 3;
+  ```
 
 ## 幻灯片 8: RAG Agent 典型架构与工作流
 - **ReAct 框架 (Reason + Act)**:
